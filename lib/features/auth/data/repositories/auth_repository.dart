@@ -9,7 +9,7 @@ class AuthRepository {
   AuthRepository(this._dio, this._storage);
 
   Future<UserModel> login(String email, String password) async {
-    final response = await _dio.post('/auth/login', data: {
+    final response = await _dio.post('/login', data: {
       'email': email,
       'password': password,
     });
@@ -22,7 +22,7 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
-      await _dio.post('/auth/logout');
+      await _dio.post('/logout');
     } catch (_) {}
     await _storage.clearAll();
   }
