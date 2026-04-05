@@ -26,4 +26,10 @@ class AuthRepository {
     } catch (_) {}
     await _storage.clearAll();
   }
+
+  Future<UserModel?> restoreSession() async {
+  final userData = await _storage.readUser();
+  if (userData == null) return null;
+  return UserModel.fromJson(userData);
+}
 }
