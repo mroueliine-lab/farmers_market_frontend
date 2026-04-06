@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/farmer_provider.dart';
+import '../../cart/providers/cart_provider.dart';
+
 
 class FarmerProfileScreen extends ConsumerWidget {
   final int farmerId;
@@ -54,7 +56,10 @@ class FarmerProfileScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => context.push('/cart', extra: farmer),
+                  onPressed: () {
+  ref.read(cartProvider.notifier).setFarmer(farmer);
+  context.go('/cart');
+},
                   icon: const Icon(Icons.shopping_cart),
                   label: const Text('Start Sale'),
                   style: ElevatedButton.styleFrom(

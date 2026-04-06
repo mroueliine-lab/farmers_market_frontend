@@ -6,6 +6,7 @@ import '../features/auth/providers/auth_provider.dart';
 import '../features/farmers/presentation/farmer_search_screen.dart';
 import '../features/farmers/presentation/farmer_profile_screen.dart';
 import '../features/farmers/presentation/create_farmer_screen.dart';
+import '../features/cart/presentation/cart_screen.dart';
 
 // Placeholder screens — we'll replace these one by one
 class HomeScreen extends StatelessWidget {
@@ -15,12 +16,6 @@ class HomeScreen extends StatelessWidget {
       const Scaffold(body: Center(child: Text('Home')));
 }
 
-class CartScreen extends StatelessWidget {
-  const CartScreen({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Cart')));
-}
 
 class DebtsScreen extends StatelessWidget {
   const DebtsScreen({super.key});
