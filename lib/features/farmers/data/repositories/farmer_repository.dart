@@ -7,14 +7,18 @@ class FarmerRepository {
   FarmerRepository(this._dio);
 
   Future<Farmer?> search(String query) async {
-    final response = await _dio.get('/farmers/search', queryParameters: {'query': query});
-    if (response.data == null) return null;
-    return Farmer.fromJson(response.data);
+    try {
+      final response = await _dio.get('/farmers/search', queryParameters: {'q': query});
+      return Farmer.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      rethrow;
+    }
   }
 
   Future<Farmer> show(int id) async {
     final response = await _dio.get('/farmers/$id');
-    return Farmer.fromJson(response.data);
+    return Farmer.fromJson(response.data['data']);
   }
 
   Future<Farmer> create({
