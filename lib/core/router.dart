@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/farmers/presentation/farmer_search_screen.dart';
+import '../features/farmers/presentation/farmer_profile_screen.dart';
+import '../features/farmers/presentation/create_farmer_screen.dart';
 
 // Placeholder screens — we'll replace these one by one
 class HomeScreen extends StatelessWidget {
@@ -10,13 +13,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       const Scaffold(body: Center(child: Text('Home')));
-}
-
-class FarmersScreen extends StatelessWidget {
-  const FarmersScreen({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Farmers')));
 }
 
 class CartScreen extends StatelessWidget {
@@ -70,18 +66,30 @@ class AppShell extends StatelessWidget {
   }
 }
 
+class _RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  _RouterNotifier(this._ref) {
+    _ref.listen(authProvider, (_, __) => notifyListeners());
+  }
+
+  String? redirect(BuildContext context, GoRouterState state) {
+    final user = _ref.read(authProvider);
+    final isLoggedIn = user != null;
+    final isOnLogin = state.uri.toString() == '/login';
+
+    if (!isLoggedIn && !isOnLogin) return '/login';
+    if (isLoggedIn && isOnLogin) return '/home';
+    return null;
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
+  final notifier = _RouterNotifier(ref);
   return GoRouter(
     initialLocation: '/home',
-    redirect: (context, state) {
-      final user = ref.read(authProvider);
-      final isLoggedIn = user != null;
-      final isOnLogin = state.uri.toString() == '/login';
-
-      if (!isLoggedIn && !isOnLogin) return '/login';
-      if (isLoggedIn && isOnLogin) return '/home';
-      return null;
-    },
+    refreshListenable: notifier,
+    redirect: notifier.redirect,
     routes: [
       GoRoute(
         path: '/login',
@@ -91,7 +99,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
-          GoRoute(path: '/farmers', builder: (context, state) => const FarmersScreen()),
+          GoRoute(path: '/farmers', builder: (context, state) => const FarmerSearchScreen()),
+          GoRoute(path: '/farmers/create', builder: (context, state) => const CreateFarmerScreen()),
+          GoRoute(
+            path: '/farmers/:id',
+            builder: (context, state) => FarmerProfileScreen(
+              farmerId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
           GoRoute(path: '/cart', builder: (context, state) => const CartScreen()),
           GoRoute(path: '/debts', builder: (context, state) => const DebtsScreen()),
         ],
