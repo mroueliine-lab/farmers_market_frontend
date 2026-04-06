@@ -6,6 +6,7 @@ import '../data/repositories/order_repository.dart';
 import '../../products/providers/product_provider.dart';
 import '../../products/data/models/product_model.dart';
 import '../../../core/providers.dart';
+import '../../../core/responsive.dart';
 import '../../farmers/providers/farmer_provider.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
@@ -63,10 +64,150 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     }
   }
 
+  Widget _farmerBanner(cart) {
+    if (cart.farmer != null) {
+      return Container(
+        color: Colors.green.shade50,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(cart.farmer!.fullName,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              'Credit: ${cart.farmer!.availableCredit.toStringAsFixed(0)} FCFA',
+              style: const TextStyle(color: Colors.green),
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      color: Colors.orange.shade50,
+      padding: const EdgeInsets.all(12),
+      child: const Row(
+        children: [
+          Icon(Icons.warning, color: Colors.orange),
+          SizedBox(width: 8),
+          Text('No farmer selected — go to Farmers tab first'),
+        ],
+      ),
+    );
+  }
+
+  Widget _cartPanel(cart) {
+    return Column(
+      children: [
+        Expanded(
+          child: cart.items.isEmpty
+              ? const Center(child: Text('No items in cart'))
+              : ListView.builder(
+                  itemCount: cart.items.length,
+                  itemBuilder: (context, index) {
+                    final item = cart.items[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(item.product.name),
+                      subtitle: Text(
+                          '${item.product.priceFcfa.toStringAsFixed(0)} FCFA x ${item.quantity}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('${item.total.toStringAsFixed(0)} FCFA'),
+                          IconButton(
+                            icon: const Icon(Icons.remove_circle,
+                                color: Colors.red),
+                            onPressed: () => ref
+                                .read(cartProvider.notifier)
+                                .removeProduct(item.product.id),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('${cart.total.toStringAsFixed(0)} FCFA',
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Text('Payment: '),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Cash'),
+                    selected: _paymentMethod == 'cash',
+                    onSelected: (_) =>
+                        setState(() => _paymentMethod = 'cash'),
+                    selectedColor: Colors.green,
+                    labelStyle: TextStyle(
+                      color: _paymentMethod == 'cash'
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Credit'),
+                    selected: _paymentMethod == 'credit',
+                    onSelected: (_) =>
+                        setState(() => _paymentMethod = 'credit'),
+                    selectedColor: Colors.green,
+                    labelStyle: TextStyle(
+                      color: _paymentMethod == 'credit'
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _checkout,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: _loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Checkout',
+                          style: TextStyle(fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
+    final isWide = !Responsive.isMobile(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -76,141 +217,51 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       ),
       body: Column(
         children: [
-          // Farmer info banner
-          if (cart.farmer != null)
-            Container(
-              color: Colors.green.shade50,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(cart.farmer!.fullName,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(
-                    'Credit: ${cart.farmer!.availableCredit.toStringAsFixed(0)} FCFA',
-                    style: const TextStyle(color: Colors.green),
-                  ),
-                ],
-              ),
-            )
-          else
-            Container(
-              color: Colors.orange.shade50,
-              padding: const EdgeInsets.all(12),
-              child: const Row(
-                children: [
-                  Icon(Icons.warning, color: Colors.orange),
-                  SizedBox(width: 8),
-                  Text('No farmer selected — go to Farmers tab first'),
-                ],
-              ),
-            ),
-
-          // Product browser
+          _farmerBanner(cart),
           Expanded(
-            flex: 3,
-            child: categoriesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
-              data: (categories) => _ProductBrowser(categories: categories),
-            ),
-          ),
-
-          const Divider(height: 1),
-
-          // Cart items
-          if (cart.items.isNotEmpty)
-            Expanded(
-              flex: 2,
-              child: ListView.builder(
-                itemCount: cart.items.length,
-                itemBuilder: (context, index) {
-                  final item = cart.items[index];
-                  return ListTile(
-                    dense: true,
-                    title: Text(item.product.name),
-                    subtitle: Text('${item.product.priceFcfa.toStringAsFixed(0)} FCFA x ${item.quantity}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('${item.total.toStringAsFixed(0)} FCFA'),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () => ref
-                              .read(cartProvider.notifier)
-                              .removeProduct(item.product.id),
+            child: isWide
+                ? Row(
+                    children: [
+                      // Products on the left
+                      Expanded(
+                        flex: 3,
+                        child: categoriesAsync.when(
+                          loading: () => const Center(
+                              child: CircularProgressIndicator()),
+                          error: (e, _) =>
+                              Center(child: Text('Error: $e')),
+                          data: (categories) =>
+                              _ProductBrowser(categories: categories),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-
-          // Total + payment + checkout
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text('${cart.total.toStringAsFixed(0)} FCFA',
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Text('Payment: '),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('Cash'),
-                      selected: _paymentMethod == 'cash',
-                      onSelected: (_) => setState(() => _paymentMethod = 'cash'),
-                      selectedColor: Colors.green,
-                      labelStyle: TextStyle(
-                        color: _paymentMethod == 'cash' ? Colors.white : Colors.black,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text('Credit'),
-                      selected: _paymentMethod == 'credit',
-                      onSelected: (_) => setState(() => _paymentMethod = 'credit'),
-                      selectedColor: Colors.green,
-                      labelStyle: TextStyle(
-                        color: _paymentMethod == 'credit' ? Colors.white : Colors.black,
+                      const VerticalDivider(width: 1),
+                      // Cart on the right
+                      Expanded(
+                        flex: 2,
+                        child: _cartPanel(cart),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _checkout,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: _loading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Checkout', style: TextStyle(fontSize: 16)),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: categoriesAsync.when(
+                          loading: () => const Center(
+                              child: CircularProgressIndicator()),
+                          error: (e, _) =>
+                              Center(child: Text('Error: $e')),
+                          data: (categories) =>
+                              _ProductBrowser(categories: categories),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      Expanded(
+                        flex: 2,
+                        child: _cartPanel(cart),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -251,9 +302,12 @@ class _ProductBrowser extends ConsumerWidget {
                       title: Text(product.name),
                       trailing: Text(
                         '${product.priceFcfa.toStringAsFixed(0)} FCFA',
-                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold),
                       ),
-                      onTap: () => ref.read(cartProvider.notifier).addProduct(product),
+                      onTap: () =>
+                          ref.read(cartProvider.notifier).addProduct(product),
                     );
                   },
                 );

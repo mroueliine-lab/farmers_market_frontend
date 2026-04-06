@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'responsive.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/farmers/presentation/farmer_search_screen.dart';
@@ -20,22 +21,54 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
+    final selectedIndex = _selectedIndex(location);
+    final isWide = !Responsive.isMobile(context);
+
+    const destinations = [
+      (icon: Icons.home, label: 'Home', path: '/home'),
+      (icon: Icons.people, label: 'Farmers', path: '/farmers'),
+      (icon: Icons.shopping_cart, label: 'Cart', path: '/cart'),
+    ];
+
+    void onTap(int index) {
+      context.go(destinations[index].path);
+    }
+
+    if (isWide) {
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onTap,
+              labelType: NavigationRailLabelType.all,
+              selectedIconTheme: const IconThemeData(color: Colors.green),
+              selectedLabelTextStyle: const TextStyle(color: Colors.green),
+              destinations: destinations
+                  .map((d) => NavigationRailDestination(
+                        icon: Icon(d.icon),
+                        label: Text(d.label),
+                      ))
+                  .toList(),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: child),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex(location),
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0: context.go('/home'); break;
-            case 1: context.go('/farmers'); break;
-            case 2: context.go('/cart'); break;
-          }
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.people), label: 'Farmers'),
-          NavigationDestination(icon: Icon(Icons.shopping_cart), label: 'Cart'),
-        ],
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onTap,
+        destinations: destinations
+            .map((d) => NavigationDestination(
+                  icon: Icon(d.icon),
+                  label: d.label,
+                ))
+            .toList(),
       ),
     );
   }
