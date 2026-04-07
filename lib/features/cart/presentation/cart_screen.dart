@@ -7,6 +7,7 @@ import '../../products/providers/product_provider.dart';
 import '../../products/data/models/product_model.dart';
 import '../../../core/providers.dart';
 import '../../../core/responsive.dart';
+import '../../../core/error_handler.dart';
 import '../../farmers/providers/farmer_provider.dart';
 
 class CartScreen extends ConsumerStatefulWidget {
@@ -53,12 +54,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         );
         context.go('/farmers/$farmerId');
       }
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
+    } catch (e) {
+      if (mounted) ErrorHandler.show(context, e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

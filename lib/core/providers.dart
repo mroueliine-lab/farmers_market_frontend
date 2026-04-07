@@ -14,3 +14,9 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(AuthInterceptor(storage));
   return dio;
 });
+
+final settingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final dio = ref.read(dioProvider);
+  final response = await dio.get('/settings');
+  return Map<String, dynamic>.from(response.data['data']);
+});

@@ -37,6 +37,8 @@ class FarmerRepository {
       'identifier': identifier,
       'credit_limit': creditLimit,
     });
-    return Farmer.fromJson(response.data);
+    final data = response.data['data'] as Map<String, dynamic>;
+    data['debts'] = [];
+    return Farmer.fromJson(data);
   }
 }

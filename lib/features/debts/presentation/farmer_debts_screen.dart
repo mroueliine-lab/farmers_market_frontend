@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/debt_provider.dart';
+import '../../../core/providers.dart';
+import '../../../core/error_handler.dart';
 
-class FarmerDebtsScreen extends ConsumerWidget {
+class FarmerDebtsScreen extends ConsumerStatefulWidget {
   final int farmerId;
   const FarmerDebtsScreen({super.key, required this.farmerId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final debtsAsync = ref.watch(farmerDebtsProvider(farmerId));
+  ConsumerState<FarmerDebtsScreen> createState() => _FarmerDebtsScreenState();
+}
+
+class _FarmerDebtsScreenState extends ConsumerState<FarmerDebtsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.invalidate(farmerDebtsProvider(widget.farmerId)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final debtsAsync = ref.watch(farmerDebtsProvider(widget.farmerId));
 
     return Scaffold(
       appBar: AppBar(
@@ -86,7 +99,7 @@ class FarmerDebtsScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showRepaymentDialog(context, ref),
+        onPressed: () => _showRepaymentDialog(context),
         icon: const Icon(Icons.payments),
         label: const Text('Record Repayment'),
         backgroundColor: Colors.green,
@@ -95,20 +108,26 @@ class FarmerDebtsScreen extends ConsumerWidget {
     );
   }
 
-  void _showRepaymentDialog(BuildContext context, WidgetRef ref) {
+  void _showRepaymentDialog(BuildContext context) {
     final kgController = TextEditingController();
+    final settings = ref.read(settingsProvider).value;
+    final rate = double.tryParse(settings?['commodity_rate']?.toString() ?? '0') ?? 0;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Record Repayment'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Enter commodity amount in kg:'),
+            Text('Current rate: $rate FCFA/kg',
+                style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 12),
             TextField(
               controller: kgController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
               decoration: const InputDecoration(
                 labelText: 'Amount (kg)',
                 border: OutlineInputBorder(),
@@ -123,59 +142,116 @@ class FarmerDebtsScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () async {
+            onPressed: () {
               final kg = double.tryParse(kgController.text);
               if (kg == null || kg <= 0) return;
+              final fcfaPreview = kg * rate;
               Navigator.pop(ctx);
-              try {
-                final result = await ref.read(debtRepositoryProvider).recordRepayment(
-                      farmerId: farmerId,
-                      kgReceived: kg,
-                    );
-                ref.invalidate(farmerDebtsProvider(farmerId));
-                if (context.mounted) {
-                  final rate = result['commodity_rate'];
-                  final fcfa = result['fcfa_value'];
-                  showDialog(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Repayment Recorded'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Kg received: ${result['kg_received']} kg'),
-                          Text('Rate used: $rate FCFA/kg'),
-                          Text('FCFA credited: $fcfa FCFA'),
-                        ],
-                      ),
-                      actions: [
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('OK'),
-                        ),
-                      ],
+              // Step 2: Confirmation dialog
+              showDialog(
+                context: context,
+                builder: (ctx2) => AlertDialog(
+                  title: const Text('Confirm Repayment'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _confirmRow('Kg received', '$kg kg'),
+                      _confirmRow('Rate', '$rate FCFA/kg'),
+                      const Divider(),
+                      _confirmRow('FCFA credited',
+                          '${fcfaPreview.toStringAsFixed(0)} FCFA',
+                          bold: true),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx2),
+                      child: const Text('Back'),
                     ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
-                }
-              }
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx2);
+                        try {
+                          final result = await ref
+                              .read(debtRepositoryProvider)
+                              .recordRepayment(
+                                farmerId: widget.farmerId,
+                                kgReceived: kg,
+                              );
+                          ref.invalidate(farmerDebtsProvider(widget.farmerId));
+                          if (context.mounted) {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Row(children: [
+                                  Icon(Icons.check_circle, color: Colors.green),
+                                  SizedBox(width: 8),
+                                  Text('Repayment Recorded'),
+                                ]),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _confirmRow('Kg received',
+                                        '${result['kg_received']} kg'),
+                                    _confirmRow('Rate used',
+                                        '${result['commodity_rate']} FCFA/kg'),
+                                    _confirmRow('FCFA credited',
+                                        '${result['fcfa_value']} FCFA',
+                                        bold: true),
+                                  ],
+                                ),
+                                actions: [
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    child: const Text('Done'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ErrorHandler.show(context, e);
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Confirm'),
+                    ),
+                  ],
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Submit'),
+            child: const Text('Preview'),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _confirmRow(String label, String value, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value,
+              style: TextStyle(
+                  fontWeight: bold ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
     );

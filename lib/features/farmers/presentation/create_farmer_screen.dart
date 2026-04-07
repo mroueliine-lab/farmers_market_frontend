@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/farmer_provider.dart';
+import '../../../core/error_handler.dart';
 
 class CreateFarmerScreen extends ConsumerStatefulWidget {
   const CreateFarmerScreen({super.key});
@@ -45,11 +46,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
           );
       if (mounted) context.pop();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
+      if (mounted) ErrorHandler.show(context, e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

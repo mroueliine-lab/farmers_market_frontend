@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/farmer_provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/error_handler.dart';
 
 class FarmerSearchScreen extends ConsumerStatefulWidget {
   const FarmerSearchScreen({super.key});
@@ -49,7 +50,7 @@ class _FarmerSearchScreenState extends ConsumerState<FarmerSearchScreen> {
                   ? const Center(child: Text('Enter a phone number or identifier'))
                   : searchResult.when(
                       loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Center(child: Text('Error: $e')),
+                      error: (e, _) => Center(child: Text(ErrorHandler.getMessage(e))),
                       data: (farmer) {
                         if (farmer == null) {
                           return const Center(child: Text('No farmer found'));
