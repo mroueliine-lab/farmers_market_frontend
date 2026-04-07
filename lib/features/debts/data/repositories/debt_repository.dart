@@ -11,13 +11,14 @@ class DebtRepository {
     return list.map((d) => DebtModel.fromJson(d)).toList();
   }
 
-  Future<void> recordRepayment({
+  Future<Map<String, dynamic>> recordRepayment({
     required int farmerId,
-    required double amountKg,
+    required double kgReceived,
   }) async {
-    await _dio.post('/repayments', data: {
+    final response = await _dio.post('/repayments', data: {
       'farmer_id': farmerId,
-      'amount_kg': amountKg,
+      'kg_received': kgReceived,
     });
+    return response.data['data'];
   }
 }

@@ -128,14 +128,38 @@ class FarmerDebtsScreen extends ConsumerWidget {
               if (kg == null || kg <= 0) return;
               Navigator.pop(ctx);
               try {
-                await ref.read(debtRepositoryProvider).recordRepayment(
+                final result = await ref.read(debtRepositoryProvider).recordRepayment(
                       farmerId: farmerId,
-                      amountKg: kg,
+                      kgReceived: kg,
                     );
                 ref.invalidate(farmerDebtsProvider(farmerId));
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Repayment recorded successfully')),
+                  final rate = result['commodity_rate'];
+                  final fcfa = result['fcfa_value'];
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Repayment Recorded'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Kg received: ${result['kg_received']} kg'),
+                          Text('Rate used: $rate FCFA/kg'),
+                          Text('FCFA credited: $fcfa FCFA'),
+                        ],
+                      ),
+                      actions: [
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
                   );
                 }
               } catch (e) {

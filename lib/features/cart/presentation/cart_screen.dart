@@ -273,6 +273,59 @@ class _ProductBrowser extends ConsumerWidget {
   final List<Category> categories;
   const _ProductBrowser({required this.categories});
 
+  void _showQuantityDialog(BuildContext context, WidgetRef ref, Product product) {
+    final qtyController = TextEditingController(text: '1');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(product.name),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${product.priceFcfa.toStringAsFixed(0)} FCFA per unit'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: qtyController,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Quantity',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final qty = int.tryParse(qtyController.text);
+              if (qty != null && qty > 0) {
+                ref.read(cartProvider.notifier).updateQuantity(product.id, qty);
+                // If not in cart yet, add it first
+                final cart = ref.read(cartProvider);
+                final exists = cart.items.any((i) => i.product.id == product.id);
+                if (!exists) {
+                  ref.read(cartProvider.notifier).addProduct(product);
+                  ref.read(cartProvider.notifier).updateQuantity(product.id, qty);
+                }
+              }
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (categories.isEmpty) return const Center(child: Text('No categories'));
@@ -306,8 +359,7 @@ class _ProductBrowser extends ConsumerWidget {
                             color: Colors.green,
                             fontWeight: FontWeight.bold),
                       ),
-                      onTap: () =>
-                          ref.read(cartProvider.notifier).addProduct(product),
+                      onTap: () => _showQuantityDialog(context, ref, product),
                     );
                   },
                 );
