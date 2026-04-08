@@ -26,7 +26,12 @@ class SecureStorageService {
   Future<Map<String, dynamic>?> readUser() async {
     final data = await _storage.read(key: _userKey);
     if (data == null) return null;
-    return jsonDecode(data) as Map<String, dynamic>;
+    try {
+      return jsonDecode(data) as Map<String, dynamic>;
+    } catch (_) {
+      await deleteUser();
+      return null;
+    }
   }
 
   Future<void> deleteUser() async {

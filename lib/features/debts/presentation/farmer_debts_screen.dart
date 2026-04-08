@@ -31,7 +31,7 @@ class _FarmerDebtsScreenState extends ConsumerState<FarmerDebtsScreen> {
       ),
       body: debtsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(ErrorHandler.getMessage(e))),
         data: (debts) {
           if (debts.isEmpty) {
             return const Center(child: Text('No open debts'));

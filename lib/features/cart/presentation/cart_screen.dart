@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/cart_provider.dart';
-import '../data/repositories/order_repository.dart';
+import '../providers/checkout_provider.dart';
 import '../../products/providers/product_provider.dart';
-import '../../../core/providers.dart';
 import '../../../core/responsive.dart';
 import '../../../core/error_handler.dart';
-import '../../farmers/providers/farmer_provider.dart';
 import 'widgets/cart_farmer_banner.dart';
 import 'widgets/cart_panel.dart';
 import 'widgets/product_browser.dart';
@@ -21,51 +19,29 @@ class CartScreen extends ConsumerStatefulWidget {
 
 class _CartScreenState extends ConsumerState<CartScreen> {
   String _paymentMethod = 'cash';
-  bool _loading = false;
 
-  Future<void> _checkout() async {
-    final cart = ref.read(cartProvider);
-    if (cart.farmer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No farmer selected')),
-      );
-      return;
-    }
-    if (cart.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cart is empty')),
-      );
-      return;
-    }
-    setState(() => _loading = true);
-    try {
-      final repo = OrderRepository(ref.read(dioProvider));
-      await repo.placeOrder(
-        farmerId: cart.farmer!.id,
-        paymentMethod: _paymentMethod,
-        items: cart.items
-            .map((i) => {'product_id': i.product.id, 'quantity': i.quantity})
-            .toList(),
-      );
-      final farmerId = cart.farmer!.id;
-      ref.read(cartProvider.notifier).clear();
-      ref.invalidate(farmerDetailProvider(farmerId));
-      if (mounted) {
+  @override
+  void initState() {
+    super.initState();
+    // Listen to checkout state changes
+    ref.listenManual(checkoutProvider, (previous, next) {
+      if (next.status == CheckoutStatus.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Order placed successfully!')),
         );
-        context.go('/farmers/$farmerId');
+        context.go('/farmers/${next.completedFarmerId}');
+        ref.read(checkoutProvider.notifier).reset();
+      } else if (next.status == CheckoutStatus.error) {
+        ErrorHandler.show(context, next.errorMessage ?? 'Unknown error');
+        ref.read(checkoutProvider.notifier).reset();
       }
-    } catch (e) {
-      if (mounted) ErrorHandler.show(context, e);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
+    final checkout = ref.watch(checkoutProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final isWide = !Responsive.isMobile(context);
 
@@ -78,9 +54,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     final cartPanel = CartPanel(
       cart: cart,
       paymentMethod: _paymentMethod,
-      loading: _loading,
+      loading: checkout.status == CheckoutStatus.loading,
       onPaymentChanged: (v) => setState(() => _paymentMethod = v),
-      onCheckout: _checkout,
+      onCheckout: () => ref.read(checkoutProvider.notifier).checkout(_paymentMethod),
     );
 
     return Scaffold(

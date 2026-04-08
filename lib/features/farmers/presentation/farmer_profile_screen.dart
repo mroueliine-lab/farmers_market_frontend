@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/farmer_provider.dart';
 import '../../cart/providers/cart_provider.dart';
+import '../../../core/error_handler.dart';
 
 
 class FarmerProfileScreen extends ConsumerWidget {
@@ -21,7 +22,7 @@ class FarmerProfileScreen extends ConsumerWidget {
       ),
       body: farmerAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => Center(child: Text(ErrorHandler.getMessage(e))),
         data: (farmer) => SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
