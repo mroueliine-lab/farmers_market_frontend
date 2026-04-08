@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router.dart';
+import 'core/config/app_config.dart';
 import 'features/auth/providers/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppConfig.environment = AppEnvironment.dev; 
   runApp(const ProviderScope(child: MyApp()));
 }
 

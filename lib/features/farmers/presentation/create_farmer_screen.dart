@@ -42,7 +42,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
             email: _emailController.text.trim(),
             phoneNumber: _phoneController.text.trim(),
             identifier: _identifierController.text.trim(),
-            creditLimit: double.parse(_creditLimitController.text.trim()),
+            creditLimit: double.tryParse(_creditLimitController.text.trim()) ?? 0,
           );
       if (mounted) context.pop();
     } catch (e) {
