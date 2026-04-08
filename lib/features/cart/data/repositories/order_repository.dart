@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/network/api_response.dart';
 
 class OrderRepository {
   final Dio _dio;
@@ -14,6 +15,6 @@ class OrderRepository {
       'payment_method': paymentMethod,
       'items': items,
     });
-    return response.data;
+    return ApiResponse.raw(response);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/debt_model.dart';
+import '../../../../core/network/api_response.dart';
 
 class DebtRepository {
   final Dio _dio;
@@ -7,8 +8,7 @@ class DebtRepository {
 
   Future<List<DebtModel>> getFarmerDebts(int farmerId) async {
     final response = await _dio.get('/farmers/$farmerId/debts');
-    final list = response.data['data'] as List;
-    return list.map((d) => DebtModel.fromJson(d)).toList();
+    return ApiResponse.list(response).map((d) => DebtModel.fromJson(d)).toList();
   }
 
   Future<Map<String, dynamic>> recordRepayment({
@@ -19,6 +19,6 @@ class DebtRepository {
       'farmer_id': farmerId,
       'kg_received': kgReceived,
     });
-    return response.data['data'];
+    return ApiResponse.object(response);
   }
 }

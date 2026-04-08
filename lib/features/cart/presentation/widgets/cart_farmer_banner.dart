@@ -14,8 +14,12 @@ class CartFarmerBanner extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(cart.farmer!.fullName,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Text(cart.farmer!.fullName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis),
+            ),
+            const SizedBox(width: 8),
             Text(
               'Credit: ${cart.farmer!.availableCredit.toStringAsFixed(0)} FCFA',
               style: const TextStyle(color: Colors.green),
@@ -31,7 +35,7 @@ class CartFarmerBanner extends StatelessWidget {
         children: [
           Icon(Icons.warning, color: Colors.orange),
           SizedBox(width: 8),
-          Text('No farmer selected — go to Farmers tab first'),
+          Flexible(child: Text('No farmer selected — go to Farmers tab first')),
         ],
       ),
     );

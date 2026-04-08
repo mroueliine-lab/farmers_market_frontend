@@ -39,10 +39,12 @@ class CheckoutSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Text('Payment: '),
-              const SizedBox(width: 8),
+              const Text('Payment:'),
               ChoiceChip(
                 label: const Text('Cash'),
                 selected: paymentMethod == 'cash',
@@ -52,7 +54,6 @@ class CheckoutSheet extends StatelessWidget {
                   color: paymentMethod == 'cash' ? Colors.white : Colors.black,
                 ),
               ),
-              const SizedBox(width: 8),
               ChoiceChip(
                 label: const Text('Credit'),
                 selected: paymentMethod == 'credit',

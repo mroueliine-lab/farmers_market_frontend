@@ -33,7 +33,7 @@ class FarmerProfileScreen extends ConsumerWidget {
                   radius: 40,
                   backgroundColor: Colors.green,
                   child: Text(
-                    farmer.firstname[0] + farmer.lastname[0],
+                    farmer.initials,
                     style: const TextStyle(fontSize: 28, color: Colors.white),
                   ),
                 ),

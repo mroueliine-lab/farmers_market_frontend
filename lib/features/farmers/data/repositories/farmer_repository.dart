@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/farmer_model.dart';
+import '../../../../core/network/api_response.dart';
 
 class FarmerRepository {
   final Dio _dio;
@@ -9,7 +10,7 @@ class FarmerRepository {
   Future<Farmer?> search(String query) async {
     try {
       final response = await _dio.get('/farmers/search', queryParameters: {'q': query});
-      return Farmer.fromJson(response.data['data']);
+      return Farmer.fromJson(ApiResponse.object(response));
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
       rethrow;
@@ -18,7 +19,7 @@ class FarmerRepository {
 
   Future<Farmer> show(int id) async {
     final response = await _dio.get('/farmers/$id');
-    return Farmer.fromJson(response.data['data']);
+    return Farmer.fromJson(ApiResponse.object(response));
   }
 
   Future<Farmer> create({
@@ -37,7 +38,7 @@ class FarmerRepository {
       'identifier': identifier,
       'credit_limit': creditLimit,
     });
-    final data = response.data['data'] as Map<String, dynamic>;
+    final data = ApiResponse.object(response);
     data['debts'] = [];
     return Farmer.fromJson(data);
   }

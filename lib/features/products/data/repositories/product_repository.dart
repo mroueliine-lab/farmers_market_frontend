@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/product_model.dart';
+import '../../../../core/network/api_response.dart';
 
 class ProductRepository {
   final Dio _dio;
@@ -7,13 +8,12 @@ class ProductRepository {
 
   Future<List<Product>> getProducts() async {
     final response = await _dio.get('/products');
-    final list = response.data['data'] as List;
-    return list.map((p) => Product.fromJson(p)).toList();
+    return ApiResponse.list(response).map((p) => Product.fromJson(p)).toList();
   }
 
   Future<Product> show(int id) async {
         final response = await _dio.get('/products/$id');
-        return Product.fromJson(response.data['data']);
+        return Product.fromJson(ApiResponse.object(response));
     }
 
     Future<Product> create({
@@ -28,7 +28,7 @@ class ProductRepository {
             'price_fcfa': priceFcfa,
             'category_id': categoryId,
         });
-        return Product.fromJson(response.data);
+        return Product.fromJson(ApiResponse.object(response));
     }
 
  Future<Product> update({
@@ -44,7 +44,7 @@ class ProductRepository {
             if (priceFcfa != null) 'price_fcfa': priceFcfa,
             if (categoryId != null) 'category_id': categoryId,
         });
-        return Product.fromJson(response.data);
+        return Product.fromJson(ApiResponse.object(response));
 
 }
 

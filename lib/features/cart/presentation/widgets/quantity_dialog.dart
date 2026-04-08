@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../products/data/models/product_model.dart';
+import 'package:farmers_market/features/products/data/models/product_model.dart';
 import '../../providers/cart_provider.dart';
 
 void showQuantityDialog(BuildContext context, WidgetRef ref, Product product) {
@@ -34,12 +34,7 @@ void showQuantityDialog(BuildContext context, WidgetRef ref, Product product) {
           onPressed: () {
             final qty = int.tryParse(qtyController.text);
             if (qty != null && qty > 0) {
-              final cart = ref.read(cartProvider);
-              final exists = cart.items.any((i) => i.product.id == product.id);
-              if (!exists) {
-                ref.read(cartProvider.notifier).addProduct(product);
-              }
-              ref.read(cartProvider.notifier).updateQuantity(product.id, qty);
+              ref.read(cartProvider.notifier).addItem(product, quantity: qty);
             }
             Navigator.pop(ctx);
           },

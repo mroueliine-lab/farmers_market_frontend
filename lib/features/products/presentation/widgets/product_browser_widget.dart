@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/models/product_model.dart';
+import 'package:farmers_market/features/products/data/models/product_model.dart';
 
 class ProductBrowserWidget extends StatelessWidget {
   final List<Category> categories;

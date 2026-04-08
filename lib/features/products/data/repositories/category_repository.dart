@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/product_model.dart';
+import '../../../../core/network/api_response.dart';
 
 class CategoryRepository {
   final Dio _dio;
@@ -7,7 +8,6 @@ class CategoryRepository {
 
   Future<List<Category>> getCategories() async {
     final response = await _dio.get('/categories');
-    final list = response.data['data'] as List;
-    return list.map((c) => Category.fromJson(c)).toList();
+    return ApiResponse.list(response).map((c) => Category.fromJson(c)).toList();
   }
 }

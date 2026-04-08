@@ -6,7 +6,7 @@ class AppConfig {
   static String get baseUrl {
     switch (environment) {
       case AppEnvironment.dev:
-        return 'https://farmers_market.test/api';
+        return 'https://farmers_market.test/api/v1';
       case AppEnvironment.staging:
         return '';
       case AppEnvironment.prod:

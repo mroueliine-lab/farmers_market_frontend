@@ -18,7 +18,7 @@ class Product {
       id: json['id'],
       name: json['name'],
       description: json['description'] ?? '',
-      priceFcfa: (json['price_fcfa'] as num).toDouble(),
+      priceFcfa: double.tryParse(json['price_fcfa'].toString()) ?? 0.0,
       categoryId: json['category_id'],
     );
   }

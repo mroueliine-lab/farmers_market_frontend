@@ -16,8 +16,8 @@ class DebtModel {
   factory DebtModel.fromJson(Map<String, dynamic> json) {
     return DebtModel(
       id: json['id'],
-      originalAmountFcfa: (json['original_amount_fcfa'] as num).toDouble(),
-      remainingAmountFcfa: (json['remaining_amount_fcfa'] as num).toDouble(),
+      originalAmountFcfa: double.tryParse(json['original_amount_fcfa'].toString()) ?? 0.0,
+      remainingAmountFcfa: double.tryParse(json['remaining_amount_fcfa'].toString()) ?? 0.0,
       status: json['status'],
       transactionId: json['transaction_id'],
     );

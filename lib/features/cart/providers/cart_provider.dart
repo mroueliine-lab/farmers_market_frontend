@@ -26,14 +26,14 @@ class CartNotifier extends StateNotifier<CartState> {
     state = CartState(items: [], farmer: farmer);
   }
 
-  void addProduct(Product product) {
+  void addItem(Product product, {int quantity = 1}) {
     final index = state.items.indexWhere((i) => i.product.id == product.id);
     if (index >= 0) {
       final updated = List<CartItem>.from(state.items);
-      updated[index] = updated[index].copyWith(quantity: updated[index].quantity + 1);
+      updated[index] = updated[index].copyWith(quantity: updated[index].quantity + quantity);
       state = state.copyWith(items: updated);
     } else {
-      state = state.copyWith(items: [...state.items, CartItem(product: product, quantity: 1)]);
+      state = state.copyWith(items: [...state.items, CartItem(product: product, quantity: quantity)]);
     }
   }
 

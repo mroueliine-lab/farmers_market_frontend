@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../products/data/models/product_model.dart';
-import '../../../../products/presentation/widgets/product_browser_widget.dart';
+import 'package:farmers_market/features/products/data/models/product_model.dart';
+import 'package:farmers_market/features/products/presentation/widgets/product_browser_widget.dart';
 import 'quantity_dialog.dart';
 
 class ProductBrowser extends ConsumerWidget {

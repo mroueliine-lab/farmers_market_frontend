@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../models/user_model.dart';
 import '../../../../core/storage/secure_storage_service.dart';
+import '../../../../core/network/api_response.dart';
 
 class AuthRepository {
   final Dio _dio;
@@ -13,8 +14,9 @@ class AuthRepository {
       'email': email,
       'password': password,
     });
-    final token = response.data['token'] as String;
-    final user = UserModel.fromJson(response.data['user']);
+    final body = ApiResponse.raw(response);
+    final token = body['token'] as String;
+    final user = UserModel.fromJson(body['user']);
     await _storage.saveToken(token);
     await _storage.saveUser(user.toJson());
     return user;

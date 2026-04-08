@@ -21,6 +21,12 @@ class Farmer {
 
   String get fullName => '$firstname $lastname';
 
+  String get initials {
+    final f = firstname.isNotEmpty ? firstname[0] : '';
+    final l = lastname.isNotEmpty ? lastname[0] : '';
+    return (f + l).isNotEmpty ? (f + l) : '?';
+  }
+
   double get totalDebt =>
       debts.fold(0, (sum, d) => sum + d.remainingBalance);
 
@@ -33,12 +39,12 @@ class Farmer {
         .toList();
     return Farmer(
       id: json['id'],
-      firstname: json['firstname'],
-      lastname: json['lastname'],
+      firstname: json['firstname'] ?? '',
+      lastname: json['lastname'] ?? '',
       email: json['email'] ?? '',
       phoneNumber: json['phone_number'] ?? '',
       identifier: json['identifier'],
-      creditLimit: (json['credit_limit'] as num).toDouble(),
+      creditLimit: double.tryParse(json['credit_limit'].toString()) ?? 0.0,
       debts: debtsList,
     );
   }
@@ -53,7 +59,7 @@ class Debt {
   factory Debt.fromJson(Map<String, dynamic> json) {
     return Debt(
       id: json['id'],
-      remainingBalance: (json['remaining_amount_fcfa'] as num).toDouble(),
+      remainingBalance: double.tryParse(json['remaining_amount_fcfa'].toString()) ?? 0.0,
     );
   }
 }

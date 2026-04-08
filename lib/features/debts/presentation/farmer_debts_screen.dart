@@ -22,6 +22,10 @@ class _FarmerDebtsScreenState extends ConsumerState<FarmerDebtsScreen> {
   @override
   Widget build(BuildContext context) {
     final debtsAsync = ref.watch(farmerDebtsProvider(widget.farmerId));
+    final settingsAsync = ref.watch(settingsProvider);
+    final rate = double.tryParse(
+          settingsAsync.value?['commodity_rate']?.toString() ?? '0') ??
+        0.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -99,7 +103,7 @@ class _FarmerDebtsScreenState extends ConsumerState<FarmerDebtsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showRepaymentDialog(context),
+        onPressed: () => _showRepaymentDialog(context, rate),
         icon: const Icon(Icons.payments),
         label: const Text('Record Repayment'),
         backgroundColor: Colors.green,
@@ -108,10 +112,8 @@ class _FarmerDebtsScreenState extends ConsumerState<FarmerDebtsScreen> {
     );
   }
 
-  void _showRepaymentDialog(BuildContext context) {
+  void _showRepaymentDialog(BuildContext context, double rate) {
     final kgController = TextEditingController();
-    final settings = ref.read(settingsProvider).value;
-    final rate = double.tryParse(settings?['commodity_rate']?.toString() ?? '0') ?? 0;
 
     showDialog(
       context: context,
