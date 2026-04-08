@@ -21,6 +21,9 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
   final _creditLimitController = TextEditingController();
   bool _loading = false;
 
+  static final _emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}$');
+  static final _phoneRegex = RegExp(r'^\+?[0-9]{8,15}$');
+
   @override
   void dispose() {
     _firstnameController.dispose();
@@ -52,6 +55,31 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
     }
   }
 
+  String? _validateRequired(String? v, String label) {
+    if (v == null || v.trim().isEmpty) return '$label is required';
+    return null;
+  }
+
+  String? _validateEmail(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Email is required';
+    if (!_emailRegex.hasMatch(v.trim())) return 'Enter a valid email address';
+    return null;
+  }
+
+  String? _validatePhone(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Phone number is required';
+    if (!_phoneRegex.hasMatch(v.trim())) return 'Enter a valid phone number (8-15 digits)';
+    return null;
+  }
+
+  String? _validateCreditLimit(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Credit limit is required';
+    final amount = double.tryParse(v.trim());
+    if (amount == null) return 'Enter a valid number';
+    if (amount <= 0) return 'Credit limit must be greater than 0';
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,13 +94,21 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
           key: _formKey,
           child: Column(
             children: [
-              _field(_firstnameController, 'First Name'),
-              _field(_lastnameController, 'Last Name'),
-              _field(_emailController, 'Email', keyboardType: TextInputType.emailAddress),
-              _field(_phoneController, 'Phone Number', keyboardType: TextInputType.phone),
-              _field(_identifierController, 'Identifier'),
+              _field(_firstnameController, 'First Name',
+                  validator: (v) => _validateRequired(v, 'First Name')),
+              _field(_lastnameController, 'Last Name',
+                  validator: (v) => _validateRequired(v, 'Last Name')),
+              _field(_emailController, 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: _validateEmail),
+              _field(_phoneController, 'Phone Number',
+                  keyboardType: TextInputType.phone,
+                  validator: _validatePhone),
+              _field(_identifierController, 'Identifier',
+                  validator: (v) => _validateRequired(v, 'Identifier')),
               _field(_creditLimitController, 'Credit Limit (FCFA)',
-                  keyboardType: TextInputType.number),
+                  keyboardType: TextInputType.number,
+                  validator: _validateCreditLimit),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -95,8 +131,12 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
     );
   }
 
-  Widget _field(TextEditingController controller, String label,
-      {TextInputType? keyboardType}) {
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
@@ -106,7 +146,7 @@ class _CreateFarmerScreenState extends ConsumerState<CreateFarmerScreen> {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
-        validator: (v) => v == null || v.isEmpty ? '$label is required' : null,
+        validator: validator,
       ),
     );
   }
